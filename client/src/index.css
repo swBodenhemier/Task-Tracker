@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+h1 {
+  @apply text-4xl font-bold;
+}
+h2 {
+  @apply text-2xl;
+}
+
+.button {
+  @apply border border-sky-600 rounded-lg bg-sky-500 px-2 py-1 text-white
+         hover:bg-sky-600 active:bg-sky-700 hover:shadow hover:border-sky-700
+         active:outline outline-[1px] outline-sky-700 text-center;
+}
+
+.segment {
+  @apply border border-[#709090] bg-slate-100 rounded shadow px-6 py-4 hover:shadow-lg;
+}

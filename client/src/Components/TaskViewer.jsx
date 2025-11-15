@@ -145,6 +145,17 @@ export default function TaskViewer() {
 function Task({ task, index, setTasks }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  async function changeStatus(e, id) {
+    const newStatus = Number(e.target.value);
+    // TODO: API call goes here
+    setTasks((prev) => {
+      const thisTask = prev.find((task) => task.id === id);
+      thisTask.status = newStatus;
+      console.log(prev);
+      return prev;
+    });
+  }
+
   return (
     <div className="flex flex-col hover:border-y border-[#709090] hover:z-4">
       <div
@@ -162,7 +173,10 @@ function Task({ task, index, setTasks }) {
           <span>{task.name}</span>
         </span>
         <span className="w-1/4 max-[700px]:w-fit">
-          <select defaultValue={task.status}>
+          <select
+            defaultValue={task.status}
+            onChange={(e) => changeStatus(e, task.id)}
+          >
             {Object.entries(statusText).map((value) => (
               <option key={value[1]} value={value[0]}>
                 {value[1]}
@@ -188,7 +202,6 @@ function Task({ task, index, setTasks }) {
             >
               Delete
             </button>
-            <button className="altButton">Edit</button>
           </span>
         </div>
       )}

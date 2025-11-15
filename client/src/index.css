@@ -12,7 +12,8 @@ h2 {
 .button {
   @apply border border-sky-600 rounded-lg bg-sky-500 px-2 py-1 text-white
        hover:bg-sky-600 active:bg-sky-700 hover:shadow hover:border-sky-700
-         active:outline outline-[1px] outline-sky-700 text-center;
+         active:outline outline-[1px] outline-sky-700 text-center disabled:bg-gray-400
+          disabled:border-gray-500 disabled:hover:border-gray-700 disabled:active:outline-none;
 }
 .altButton {
   @apply border p-1 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300 cursor-pointer

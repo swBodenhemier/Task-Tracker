@@ -88,6 +88,8 @@ export default function TaskViewer() {
   const [showNewTask, setShowNewTask] = useState(false);
   const { user } = useOutletContext();
 
+  // TODO: fetch tasks from api on first load
+
   return (
     <div className="w-full h-full py-10">
       <div className="segment h-full w-full flex flex-col gap-4">
@@ -112,18 +114,35 @@ export default function TaskViewer() {
             <span className="w-1/6">Assigned By</span>
           </div>
           <div className="overflow-y-auto">
-            {tasks.map((task, index) => (
-              <Task task={task} index={index} key={task.id} />
-            ))}
+            {tasks
+              .filter((task) => task.status !== 4)
+              .map((task, index) => (
+                <Task
+                  task={task}
+                  index={index}
+                  key={task.id}
+                  setTasks={setTasks}
+                />
+              ))}
           </div>
         </div>
       </div>
-      {showNewTask && <NewTaskForm hide={() => setShowNewTask(false)} />}
+      {showNewTask && (
+        <NewTaskForm
+          hide={() => setShowNewTask(false)}
+          user={user}
+          addTask={(newTask) => {
+            const temp = [...tasks];
+            temp.push(newTask);
+            setTasks(temp);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function Task({ task, index }) {
+function Task({ task, index, setTasks }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -163,7 +182,12 @@ function Task({ task, index }) {
         >
           <span>{task.description}</span>
           <span className="flex justify-center gap-4">
-            <button className="altButton">Delete</button>
+            <button
+              className="altButton"
+              onClick={() => deleteTask(task.id, setTasks)}
+            >
+              Delete
+            </button>
             <button className="altButton">Edit</button>
           </span>
         </div>
@@ -172,32 +196,101 @@ function Task({ task, index }) {
   );
 }
 
-function NewTaskForm({ hide }) {
+function NewTaskForm({ hide, user, addTask }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    date_due: "",
+  });
+  const [disableConfirm, setDisableConfirm] = useState(true);
+
+  async function handleNewTask() {
+    const date = Date.now();
+    const newTask = {
+      ...formData,
+      id: date,
+      date_assigned: new Date(date).toISOString().split("T")[0],
+      assigned_by: user,
+      status: 0,
+    };
+    // TODO: API call goes here
+    addTask(newTask);
+    hide();
+  }
+
+  function validateFormData() {
+    setDisableConfirm(
+      formData.name === "" ||
+        formData.description === "" ||
+        formData.date_due === ""
+    );
+  }
+
   return (
     <div className="absolute inset-0 w-screen h-screen bg-white/50 flex justify-center items-center">
       <div className="segment flex flex-col gap-4 items-center">
         <h2>Create a new task</h2>
         <label>
           <span>Task Name: </span>
-          <input />
+          <input
+            defaultValue={formData.name}
+            onChange={(e) => {
+              setFormData((prev) => {
+                prev.name = e.target.value;
+                return prev;
+              });
+              validateFormData();
+            }}
+          />
         </label>
         <label>
           <span>Task Description: </span>
-          <input />
+          <input
+            defaultValue={formData.description}
+            onChange={(e) => {
+              setFormData((prev) => {
+                prev.description = e.target.value;
+                return prev;
+              });
+              validateFormData();
+            }}
+          />
         </label>
         <label>
           <span>Due Date: </span>
-          <input type="date" className="" />
+          <input
+            type="date"
+            className=""
+            defaultValue={formData.date_due}
+            onChange={(e) => {
+              setFormData((prev) => {
+                prev.date_due = e.target.value;
+                return prev;
+              });
+              validateFormData();
+            }}
+          />
         </label>
         <div className="flex gap-4">
           <button className="button" onClick={hide}>
             Cancel
           </button>
-          <button className="button" onClick={hide}>
+          <button
+            className="button"
+            onClick={handleNewTask}
+            disabled={disableConfirm}
+          >
             Create Task
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+async function deleteTask(taskID, setTasks) {
+  // TODO: API call goes here
+  setTasks((prev) => {
+    return prev.filter((task) => task.id !== taskID);
+  });
 }

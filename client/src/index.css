@@ -11,10 +11,27 @@ h2 {
 
 .button {
   @apply border border-sky-600 rounded-lg bg-sky-500 px-2 py-1 text-white
-         hover:bg-sky-600 active:bg-sky-700 hover:shadow hover:border-sky-700
+       hover:bg-sky-600 active:bg-sky-700 hover:shadow hover:border-sky-700
          active:outline outline-[1px] outline-sky-700 text-center;
+}
+.altButton {
+  @apply border p-1 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300 cursor-pointer
+       text-gray-700 active:text-black hover:outline outline-[1px] outline-[#709090] flex items-center justify-center;
 }
 
 .segment {
   @apply border border-[#709090] bg-slate-100 rounded shadow px-6 py-4 hover:shadow-lg;
+}
+
+input {
+  @apply bg-white border border-[#709090] rounded px-1 hover:border-black
+         active:bg-slate-100 focus:border-blue-500 hover:shadow-sm focus:shadow w-[195px];
+}
+
+label {
+  @apply w-full flex justify-between gap-2;
+}
+
+select {
+  @apply border border-[#709090] bg-white rounded px-1 cursor-pointer;
 }

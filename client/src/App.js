@@ -5,6 +5,8 @@ import {
   RouterProvider,
 } from "react-router";
 import HomePage from "./Components/HomePage";
+import LogIn from "./Components/login";
+import SignUp from "./Components/signup";
 import { Menu as HamburgerMenu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import TaskViewer from "./Components/TaskViewer";
@@ -15,8 +17,8 @@ const router = createBrowserRouter([
     Component: MainLayout,
     children: [
       { index: true, Component: HomePage },
-      { path: "/login", Component: HomePage },
-      { path: "/signup", Component: HomePage },
+      { path: "/login", Component: LogIn },
+      { path: "/signup", Component: SignUp },
       { path: "/tasks", Component: TaskViewer },
       { path: "/analytics", Component: HomePage },
     ],
@@ -31,6 +33,8 @@ function MainLayout() {
   const [showSidebar, setShowSidebar] = useState(false);
   const menuRef = useRef(null);
 
+  const [user, setUser] = useState(null);
+
   return (
     <div className="w-screen h-screen">
       <main className="w-full h-full flex flex-col justify-between bg-slate-50">
@@ -39,8 +43,7 @@ function MainLayout() {
             <span className="w-1/3">
               <button
                 ref={menuRef}
-                className="border p-1 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300
-                         text-gray-700 active:text-black hover:outline outline-[1px] outline-[#709090]"
+                className="altButton"
                 onClick={() => setShowSidebar((prev) => !prev)}
               >
                 <HamburgerMenu />
@@ -59,7 +62,7 @@ function MainLayout() {
               hide={() => setShowSidebar(false)}
             />
           )}
-          <Outlet />
+          <Outlet context={{ user: user }} />
         </div>
         <footer className="py-6 border-t border-[#709090] bg-slate-200 shadow"></footer>
       </main>
@@ -73,7 +76,12 @@ function SidebarComponent({ menuRef, hide }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       const ref = popupRef.current;
-      if (ref && !ref.contains(event.target)) {
+      if (
+        ref &&
+        menuRef.current &&
+        !ref.contains(event.target) &&
+        !menuRef.current.contains(event.target)
+      ) {
         hide();
       }
     };

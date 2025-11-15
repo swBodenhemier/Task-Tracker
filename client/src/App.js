@@ -3,6 +3,7 @@ import {
   NavLink,
   Outlet,
   RouterProvider,
+  useNavigate,
 } from "react-router";
 import HomePage from "./Components/HomePage";
 import LogIn from "./Components/login";
@@ -32,8 +33,13 @@ function App() {
 function MainLayout() {
   const [showSidebar, setShowSidebar] = useState(false);
   const menuRef = useRef(null);
-
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  function logOut() {
+    setUser(null);
+    navigate("/");
+  }
 
   return (
     <div className="w-screen h-screen">
@@ -51,7 +57,15 @@ function MainLayout() {
             </span>
             <h1 className="text-center w-1/3">Task Tracker</h1>
             <span className="w-1/3 text-end">
-              <button className="button">Log In</button>
+              {user === null ? (
+                <NavLink to="/login" className="button">
+                  Log In
+                </NavLink>
+              ) : (
+                <button className="button" onClick={logOut}>
+                  Log out
+                </button>
+              )}
             </span>
           </div>
         </header>
@@ -60,9 +74,10 @@ function MainLayout() {
             <SidebarComponent
               menuRef={menuRef}
               hide={() => setShowSidebar(false)}
+              user={user}
             />
           )}
-          <Outlet context={{ user: user }} />
+          <Outlet context={{ user: user, setUser: setUser }} />
         </div>
         <footer className="py-6 border-t border-[#709090] bg-slate-200 shadow"></footer>
       </main>
@@ -70,7 +85,7 @@ function MainLayout() {
   );
 }
 
-function SidebarComponent({ menuRef, hide }) {
+function SidebarComponent({ menuRef, hide, user }) {
   const popupRef = useRef(null);
 
   useEffect(() => {
@@ -102,18 +117,16 @@ function SidebarComponent({ menuRef, hide }) {
         <NavLink to="/" className="button">
           Home
         </NavLink>
-        <NavLink to="/login" className="button">
-          Log In
-        </NavLink>
-        <NavLink to="/signup" className="button">
-          Sign Up
-        </NavLink>
-        <NavLink to="/tasks" className="button">
-          View Tasks
-        </NavLink>
-        <NavLink to="/analytics" className="button">
-          Analytics
-        </NavLink>
+        {user && (
+          <NavLink to="/tasks" className="button">
+            View Tasks
+          </NavLink>
+        )}
+        {user && (
+          <NavLink to="/analytics" className="button">
+            Analytics
+          </NavLink>
+        )}
       </nav>
     </div>
   );

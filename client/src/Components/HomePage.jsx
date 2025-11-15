@@ -1,3 +1,5 @@
+import { NavLink } from "react-router";
+
 export default function HomePage() {
   return (
     <div className="flex flex-col items-center py-40">
@@ -6,8 +8,12 @@ export default function HomePage() {
           Welcome to the Task Tracker, to begin, please log in or sign up.
         </span>
         <span className="flex gap-4">
-          <button className="button">Log In</button>
-          <button className="button">Sign Up</button>
+          <NavLink to="/login" className="button">
+            Log In
+          </NavLink>
+          <NavLink to="/signup" className="button">
+            Sign Up
+          </NavLink>
         </span>
       </div>
     </div>

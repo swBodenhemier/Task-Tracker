@@ -9,10 +9,30 @@ export default function SignUp() {
   const navigate = useNavigate();
 
   async function sign_up() {
-    // TODO: API call goes here
-    // if successful
-    setUser(formData.username);
-    navigate("/tasks");
+    try {
+      const response = await fetch("http://localhost:5000/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // signup successful
+        setUser(data.user.username); // updated to match backend
+        navigate("/tasks");
+      } else {
+        // signup failed (e.g., user already exists)
+        alert(data.error || "Sign up failed");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Server error during signup");
+    }
   }
 
   function validateFormData() {
@@ -35,12 +55,9 @@ export default function SignUp() {
           <label>
             <span>Username: </span>
             <input
-              defaultValue={formData.username}
+              value={formData.username}
               onChange={(e) => {
-                setFormData((prev) => {
-                  prev.username = e.target.value;
-                  return prev;
-                });
+                setFormData((prev) => ({ ...prev, username: e.target.value }));
                 validateFormData();
               }}
             />
@@ -48,13 +65,10 @@ export default function SignUp() {
           <label>
             <span>Password: </span>
             <input
-              defaultValue={formData.password}
               type="password"
+              value={formData.password}
               onChange={(e) => {
-                setFormData((prev) => {
-                  prev.password = e.target.value;
-                  return prev;
-                });
+                setFormData((prev) => ({ ...prev, password: e.target.value }));
                 validateFormData();
               }}
             />

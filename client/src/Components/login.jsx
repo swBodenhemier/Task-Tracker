@@ -8,10 +8,30 @@ export default function LogIn() {
   const navigate = useNavigate();
 
   async function log_in() {
-    // TODO: API call goes here
-    // if successful
-    setUser(formData.username);
-    navigate("/tasks");
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // login successful
+        setUser(data.user.username); // updated to match backend
+        navigate("/tasks");
+      } else {
+        // login failed
+        alert(data.error || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Server error during login");
+    }
   }
 
   function validateFormData() {
@@ -34,12 +54,9 @@ export default function LogIn() {
           <label>
             <span>Username: </span>
             <input
-              defaultValue={formData.username}
+              value={formData.username}
               onChange={(e) => {
-                setFormData((prev) => {
-                  prev.username = e.target.value;
-                  return prev;
-                });
+                setFormData((prev) => ({ ...prev, username: e.target.value }));
                 validateFormData();
               }}
             />
@@ -47,13 +64,10 @@ export default function LogIn() {
           <label>
             <span>Password: </span>
             <input
-              defaultValue={formData.password}
               type="password"
+              value={formData.password}
               onChange={(e) => {
-                setFormData((prev) => {
-                  prev.password = e.target.value;
-                  return prev;
-                });
+                setFormData((prev) => ({ ...prev, password: e.target.value }));
                 validateFormData();
               }}
             />

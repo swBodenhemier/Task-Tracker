@@ -30,13 +30,26 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL
-)
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    date_assigned DATE NOT NULL,
+    date_due DATE NOT NULL,
+    assigned_by VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 `
   )
   .then(() => {
-    console.log("Users table is ready");
+    console.log("Users and Tasks tables are ready");
   })
   .catch((err) => console.error("Error creating table", err));
+
 
 // Signup endpoint
 app.post("/signup", async (req, res) => {

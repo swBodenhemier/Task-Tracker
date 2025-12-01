@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router";
 
 export const statusText = {
@@ -13,13 +13,16 @@ export const statusText = {
 export default function TaskViewer() {
   const [tasks, setTasks] = useState([]);
   const [showNewTask, setShowNewTask] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const { user } = useOutletContext();
 
   // Fetch tasks from backend on first load
   useEffect(() => {
     async function fetchTasks() {
       try {
-        const response = await fetch(`http://localhost:5000/api/tasks?user=${user}`);
+        const response = await fetch(
+          `http://localhost:5000/api/tasks?user=${user}`
+        );
         if (!response.ok) throw new Error("Failed to fetch tasks");
         const data = await response.json();
         setTasks(data);
@@ -42,7 +45,12 @@ export default function TaskViewer() {
           </div>
           <h2 className="w-1/3 text-center">{user}'s Tasks</h2>
           <div className="flex justify-end gap-4 w-1/3">
-            <button className="button min-w-20">Filter</button>
+            <button
+              className="button min-w-20"
+              onClick={() => setShowFilter(true)}
+            >
+              Filter
+            </button>
             <button className="button min-w-20">Sort</button>
           </div>
         </div>
@@ -76,6 +84,9 @@ export default function TaskViewer() {
             setTasks((prev) => [...prev, newTask]);
           }}
         />
+      )}
+      {showFilter && (
+        <FilterForm hide={() => setShowFilter(false)} setTasks={setTasks} />
       )}
     </div>
   );
@@ -179,7 +190,7 @@ function NewTaskForm({ hide, user, addTask }) {
   }
 
   return (
-    <div className="absolute inset-0 w-screen h-screen bg-white/50 flex justify-center items-center">
+    <div className="popup">
       <div className="segment flex flex-col gap-4 items-center">
         <h2>Create a new task</h2>
         <label>
@@ -214,7 +225,7 @@ function NewTaskForm({ hide, user, addTask }) {
           />
         </label>
         <div className="flex gap-4">
-          <button className="button" onClick={hide}>
+          <button className="button red" onClick={hide}>
             Cancel
           </button>
           <button
@@ -223,6 +234,125 @@ function NewTaskForm({ hide, user, addTask }) {
             disabled={disableConfirm}
           >
             Create Task
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterForm({ hide, setTasks }) {
+  const [formData, setFormData] = useState({
+    status: -1,
+    assigned_date: { type: "before", date: "" },
+    due_date: { type: "before", date: "" },
+    assigned_by: "",
+  });
+
+  async function applyFilters() {
+    console.log(formData);
+    const tasks = /* TODO: API call goes here*/ [];
+    setTasks(tasks);
+    hide();
+  }
+
+  return (
+    <div className="popup">
+      <div className="segment flex flex-col gap-4 items-center">
+        <h2>Filter Options</h2>
+        <label>
+          Status:{" "}
+          <select
+            defaultValue={formData.status}
+            onChange={(e) =>
+              setFormData((prev) => {
+                prev.status = e.target.value;
+                return prev;
+              })
+            }
+          >
+            <option className="italic" value={-1}>
+              No Selection
+            </option>
+            {Object.values(statusText).map((status, index) => (
+              <option key={status} value={index}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Assigned
+          <span className="flex gap-1">
+            <select
+              defaultValue={formData.assigned_date.type}
+              onChange={(e) =>
+                setFormData((prev) => {
+                  prev.assigned_date.type = e.target.value;
+                  return prev;
+                })
+              }
+            >
+              <option value="before">before</option>
+              <option value="after">after</option>
+            </select>
+            <input
+              defaultValue={formData.assigned_date.date}
+              onChange={(e) => {
+                setFormData((prev) => {
+                  prev.assigned_date.date = e.target.value;
+                  return prev;
+                });
+              }}
+              type="date"
+            />
+          </span>
+        </label>
+        <label>
+          Due
+          <span className="flex gap-1">
+            <select
+              defaultValue={formData.due_date.type}
+              onChange={(e) =>
+                setFormData((prev) => {
+                  prev.due_date.type = e.target.value;
+                  return prev;
+                })
+              }
+            >
+              <option value="before">before</option>
+              <option value="after">after</option>
+            </select>{" "}
+            <input
+              defaultValue={formData.due_date.date}
+              onChange={(e) => {
+                setFormData((prev) => {
+                  prev.due_date.date = e.target.value;
+                  return prev;
+                });
+              }}
+              type="date"
+            />
+          </span>
+        </label>
+        <label>
+          Assigned By:{" "}
+          <input
+            defaultValue={formData.assigned_by}
+            onChange={(e) => {
+              setFormData((prev) => {
+                prev.assigned_by = e.target.value;
+                return prev;
+              });
+            }}
+          />
+        </label>
+        <div className="flex gap-4">
+          <button className="button red" onClick={hide}>
+            Cancel
+          </button>
+          <button className="button" onClick={applyFilters}>
+            Apply Filters
           </button>
         </div>
       </div>

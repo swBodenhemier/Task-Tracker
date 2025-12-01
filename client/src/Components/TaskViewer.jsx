@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router";
 
 export const statusText = {
@@ -10,85 +10,26 @@ export const statusText = {
   4: "Canceled",
 };
 
-const testTasks = [
-  {
-    name: "task1",
-    id: 1,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task2",
-    id: 2,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task3",
-    id: 3,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task4",
-    id: 4,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task5",
-    id: 5,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task6",
-    id: 6,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task7",
-    id: 7,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-];
-
 export default function TaskViewer() {
-  const [tasks, setTasks] = useState(testTasks);
+  const [tasks, setTasks] = useState([]);
   const [showNewTask, setShowNewTask] = useState(false);
   const { user } = useOutletContext();
 
-  // TODO: fetch tasks from api on first load
+  // Fetch tasks from backend on first load
+  useEffect(() => {
+    async function fetchTasks() {
+      try {
+        const response = await fetch(`http://localhost:5000/api/tasks?user=${user}`);
+        if (!response.ok) throw new Error("Failed to fetch tasks");
+        const data = await response.json();
+        setTasks(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchTasks();
+  }, [user]);
 
   return (
     <div className="w-full h-full py-10">
@@ -132,9 +73,7 @@ export default function TaskViewer() {
           hide={() => setShowNewTask(false)}
           user={user}
           addTask={(newTask) => {
-            const temp = [...tasks];
-            temp.push(newTask);
-            setTasks(temp);
+            setTasks((prev) => [...prev, newTask]);
           }}
         />
       )}
@@ -149,10 +88,10 @@ function Task({ task, index, setTasks }) {
     const newStatus = Number(e.target.value);
     // TODO: API call goes here
     setTasks((prev) => {
-      const thisTask = prev.find((task) => task.id === id);
-      thisTask.status = newStatus;
-      console.log(prev);
-      return prev;
+      const updated = prev.map((t) =>
+        t.id === id ? { ...t, status: newStatus } : t
+      );
+      return updated;
     });
   }
 
@@ -174,12 +113,12 @@ function Task({ task, index, setTasks }) {
         </span>
         <span className="w-1/4 max-[700px]:w-fit">
           <select
-            defaultValue={task.status}
+            value={task.status}
             onChange={(e) => changeStatus(e, task.id)}
           >
-            {Object.entries(statusText).map((value) => (
-              <option key={value[1]} value={value[0]}>
-                {value[1]}
+            {Object.entries(statusText).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value}
               </option>
             ))}
           </select>
@@ -248,10 +187,7 @@ function NewTaskForm({ hide, user, addTask }) {
           <input
             defaultValue={formData.name}
             onChange={(e) => {
-              setFormData((prev) => {
-                prev.name = e.target.value;
-                return prev;
-              });
+              setFormData((prev) => ({ ...prev, name: e.target.value }));
               validateFormData();
             }}
           />
@@ -261,10 +197,7 @@ function NewTaskForm({ hide, user, addTask }) {
           <input
             defaultValue={formData.description}
             onChange={(e) => {
-              setFormData((prev) => {
-                prev.description = e.target.value;
-                return prev;
-              });
+              setFormData((prev) => ({ ...prev, description: e.target.value }));
               validateFormData();
             }}
           />
@@ -273,13 +206,9 @@ function NewTaskForm({ hide, user, addTask }) {
           <span>Due Date: </span>
           <input
             type="date"
-            className=""
             defaultValue={formData.date_due}
             onChange={(e) => {
-              setFormData((prev) => {
-                prev.date_due = e.target.value;
-                return prev;
-              });
+              setFormData((prev) => ({ ...prev, date_due: e.target.value }));
               validateFormData();
             }}
           />
@@ -303,7 +232,5 @@ function NewTaskForm({ hide, user, addTask }) {
 
 async function deleteTask(taskID, setTasks) {
   // TODO: API call goes here
-  setTasks((prev) => {
-    return prev.filter((task) => task.id !== taskID);
-  });
+  setTasks((prev) => prev.filter((task) => task.id !== taskID));
 }

@@ -11,6 +11,7 @@ import SignUp from "./Components/signup";
 import { Menu as HamburgerMenu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import TaskViewer from "./Components/TaskViewer";
+import TaskTracking from "./Components/TaskTracking";
 
 const router = createBrowserRouter([
   {
@@ -21,7 +22,7 @@ const router = createBrowserRouter([
       { path: "/login", Component: LogIn },
       { path: "/signup", Component: SignUp },
       { path: "/tasks", Component: TaskViewer },
-      { path: "/track", Component: HomePage },
+      { path: "/track", Component: TaskTracking },
       { path: "/analytics", Component: HomePage },
     ],
   },
@@ -115,12 +116,19 @@ function SidebarComponent({ menuRef, hide, user }) {
       ref={popupRef}
     >
       <nav className="py-4 flex flex-col gap-4" onClick={hide}>
-        <NavLink to="/" className="button">
-          Home
-        </NavLink>
+        {!user && (
+          <NavLink to="/" className="button">
+            Home
+          </NavLink>
+        )}
         {user && (
           <NavLink to="/tasks" className="button">
             View Tasks
+          </NavLink>
+        )}
+        {user && (
+          <NavLink to="/track" className="button">
+            Track User's Tasks
           </NavLink>
         )}
         {user && (

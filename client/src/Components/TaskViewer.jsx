@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
+import { fetchTasks, deleteTask } from "../util";
 
 export const statusText = {
   0: "Assigned",
@@ -20,14 +21,19 @@ export default function TaskViewer() {
   const navigate = useNavigate();
 
   // catch unauthed
-  if (!user) {
-    navigate("/login");
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, []);
 
   // Fetch tasks from backend on first load
   useEffect(() => {
     async function setFromFetch() {
       const newTasks = await fetchTasks(user);
+      if (tasks.length === 0) {
+        newTasks.sort((a, b) => a.name - b.name);
+      }
       setTasks(newTasks);
     }
     setFromFetch();
@@ -181,16 +187,14 @@ export default function TaskViewer() {
             </span>
           </div>
           <div className="overflow-y-auto">
-            {tasks
-              .filter((task) => task.status !== 4)
-              .map((task, index) => (
-                <Task
-                  task={task}
-                  index={index}
-                  key={task.id}
-                  setTasks={setTasks}
-                />
-              ))}
+            {tasks.map((task, index) => (
+              <Task
+                task={task}
+                index={index}
+                key={task.id}
+                setTasks={setTasks}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -198,6 +202,7 @@ export default function TaskViewer() {
         <NewTaskForm
           hide={() => setShowNewTask(false)}
           user={user}
+          assigned_to={user}
           addTask={(newTask) => {
             setTasks((prev) => [...prev, newTask]);
           }}
@@ -222,11 +227,15 @@ export function Task({ task, index, setTasks, tracking = false }) {
       const newStatus = Number(e.target.value);
       const updatedTask = { ...task };
       updatedTask.status = newStatus;
-      const response = fetch(`http://localhost:5000/tasks/${updatedTask.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTask),
-      });
+      const response = await fetch(
+        `http://localhost:5000/tasks/${updatedTask.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedTask),
+        }
+      );
+      if (!response.ok) throw "Server Error";
       setTasks((prev) => {
         const updated = prev.map((t) =>
           t.id === id ? { ...t, status: newStatus } : t
@@ -255,16 +264,20 @@ export function Task({ task, index, setTasks, tracking = false }) {
           <span>{task.name}</span>
         </span>
         <span className="w-1/4 max-[700px]:w-fit">
-          <select
-            value={task.status}
-            onChange={(e) => changeStatus(e, task.id)}
-          >
-            {Object.entries(statusText).map(([key, value]) => (
-              <option key={key} value={key}>
-                {value}
-              </option>
-            ))}
-          </select>
+          {tracking ? (
+            statusText[task.status]
+          ) : (
+            <select
+              value={task.status}
+              onChange={(e) => changeStatus(e, task.id)}
+            >
+              {Object.entries(statusText).map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          )}
         </span>
         <span className="w-1/6 max-[700px]:w-fit">{task.date_assigned}</span>
         <span className="w-1/6 max-[700px]:w-fit">{task.date_due}</span>
@@ -277,21 +290,23 @@ export function Task({ task, index, setTasks, tracking = false }) {
           }`}
         >
           <span>{task.description}</span>
-          <span className="flex justify-center gap-4">
-            <button
-              className="altButton"
-              onClick={() => deleteTask(task.id, setTasks)}
-            >
-              Delete
-            </button>
-          </span>
+          {!tracking && (
+            <span className="flex justify-center gap-4">
+              <button
+                className="altButton"
+                onClick={() => deleteTask(task.id, setTasks)}
+              >
+                Delete
+              </button>
+            </span>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function NewTaskForm({ hide, user, addTask }) {
+export function NewTaskForm({ hide, user, assigned_to, addTask }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -306,6 +321,7 @@ export function NewTaskForm({ hide, user, addTask }) {
       id: date,
       date_assigned: new Date(date).toISOString().split("T")[0],
       assigned_by: user,
+      assigned_to: assigned_to,
       status: 0,
     };
     try {
@@ -385,7 +401,7 @@ export function NewTaskForm({ hide, user, addTask }) {
   );
 }
 
-function FilterForm({ hide, setTasks, user }) {
+export function FilterForm({ hide, setTasks, user }) {
   const [formData, setFormData] = useState({
     status: -1,
     date_assigned: { type: "before", date: "" },
@@ -536,31 +552,4 @@ function FilterForm({ hide, setTasks, user }) {
       </div>
     </div>
   );
-}
-
-async function fetchTasks(user) {
-  let tasks = [];
-  try {
-    const response = await fetch(
-      `http://localhost:5000/api/tasks?user=${user}`
-    );
-    if (!response.ok) throw new Error("Failed to fetch tasks");
-    tasks = await response.json();
-  } catch (err) {
-    console.error(err);
-  }
-  return tasks;
-}
-
-export async function deleteTask(taskID, setTasks) {
-  try {
-    const response = await fetch(`http://localhost:5000/tasks/${taskID}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw "Server Error";
-    setTasks((prev) => prev.filter((task) => task.id !== taskID));
-  } catch (err) {
-    console.error(err);
-    alert("Failed to delete task");
-  }
 }

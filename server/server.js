@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     date_assigned DATE NOT NULL,
     date_due DATE NOT NULL,
     assigned_by VARCHAR(255) NOT NULL,
+    assigned_to VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     status INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -88,6 +89,25 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// get user
+app.get("/user/:username", async (req, res) => {
+  const { username } = req.params;
+  try {
+    const result = await client.query(
+      "SELECT * FROM users WHERE username = $1",
+      [username]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // CREATE Task
 app.post("/tasks", async (req, res) => {
   const {
@@ -96,14 +116,24 @@ app.post("/tasks", async (req, res) => {
     date_assigned,
     date_due,
     assigned_by,
+    assigned_to,
     description,
     status,
   } = req.body;
   try {
     const result = await client.query(
-      `INSERT INTO tasks (id, name, date_assigned, date_due, assigned_by, description, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [id, name, date_assigned, date_due, assigned_by, description, status]
+      `INSERT INTO tasks (id, name, date_assigned, date_due, assigned_by, assigned_to, description, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [
+        id,
+        name,
+        date_assigned,
+        date_due,
+        assigned_by,
+        assigned_to,
+        description,
+        status,
+      ]
     );
     res.status(201).json(result.rows[0]); // Send back the created task
   } catch (err) {
@@ -150,6 +180,7 @@ app.put("/tasks/:id", async (req, res) => {
       res.status(404).json({ message: "Task not found" });
     }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -183,7 +214,7 @@ app.get("/api/tasks", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT id, name, date_assigned, date_due, assigned_by, description, status FROM tasks WHERE assigned_by = $1 ORDER BY date_assigned DESC",
+      "SELECT id, name, date_assigned, date_due, assigned_by, assigned_to, description, status FROM tasks WHERE assigned_to = $1 ORDER BY date_assigned DESC",
       [user]
     );
     res.json(

@@ -18,9 +18,10 @@ const pool = new Pool({
   user: "postgres", // your PostgreSQL username
   host: "localhost",
   database: "task_manager", // your database name
-  password: "josephlaity", // your password
+  password: "password", // your password
   port: 5432,
 });
+const client = pool;
 
 // Create users table if it doesn't exist
 pool
@@ -33,11 +34,12 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     date_assigned DATE NOT NULL,
     date_due DATE NOT NULL,
     assigned_by VARCHAR(255) NOT NULL,
+    assigned_to VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     status INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -49,7 +51,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     console.log("Users and Tasks tables are ready");
   })
   .catch((err) => console.error("Error creating table", err));
-
 
 // Signup endpoint
 app.post("/signup", async (req, res) => {
@@ -88,24 +89,55 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}.`);
+// get user
+app.get("/user/:username", async (req, res) => {
+  const { username } = req.params;
+  try {
+    const result = await client.query(
+      "SELECT * FROM users WHERE username = $1",
+      [username]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
-
-client.connect();
 
 // CREATE Task
 app.post("/tasks", async (req, res) => {
-  const { name, date_assigned, date_due, assigned_by, description, status } =
-    req.body;
+  const {
+    id,
+    name,
+    date_assigned,
+    date_due,
+    assigned_by,
+    assigned_to,
+    description,
+    status,
+  } = req.body;
   try {
     const result = await client.query(
-      `INSERT INTO tasks (name, date_assigned, date_due, assigned_by, description, status)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, date_assigned, date_due, assigned_by, description, status]
+      `INSERT INTO tasks (id, name, date_assigned, date_due, assigned_by, assigned_to, description, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [
+        id,
+        name,
+        date_assigned,
+        date_due,
+        assigned_by,
+        assigned_to,
+        description,
+        status,
+      ]
     );
     res.status(201).json(result.rows[0]); // Send back the created task
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -123,6 +155,7 @@ app.get("/tasks/:id", async (req, res) => {
       res.status(404).json({ message: "Task not found" });
     }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -147,6 +180,7 @@ app.put("/tasks/:id", async (req, res) => {
       res.status(404).json({ message: "Task not found" });
     }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -165,11 +199,81 @@ app.delete("/tasks/:id", async (req, res) => {
       res.status(404).json({ message: "Task not found" });
     }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Start server
+// Fetch all tasks
+app.get("/api/tasks", async (req, res) => {
+  const { user } = req.query;
+
+  if (!user) {
+    return res.status(400).json({ error: "User query parameter is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT id, name, date_assigned, date_due, assigned_by, assigned_to, description, status FROM tasks WHERE assigned_to = $1 ORDER BY date_assigned DESC",
+      [user]
+    );
+    res.json(
+      result.rows.map((row) => {
+        row.date_assigned = row.date_assigned.toISOString().split("T")[0];
+        row.date_due = row.date_due.toISOString().split("T")[0];
+        return row;
+      })
+    );
+  } catch (err) {
+    console.error("Error fetching tasks:", err);
+    res.status(500).json({ error: "Failed to fetch tasks" });
+  }
+});
+
+//-----ANALYTICS------
+
+// Get all task analytics
+app.get("/api/analytics", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        assigned_by AS username,
+        COUNT(*) AS total_assigned,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS completed,
+        SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS overdue
+      FROM tasks
+      GROUP BY assigned_by
+      ORDER BY username
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching analytics:", err);
+    res.status(500).json({ error: "Failed to fetch analytics" });
+  }
+});
+
+// Get task analytics for a specific user
+app.get("/api/analytics/:username", async (req, res) => {
+  const { username } = req.params;
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        COUNT(*) AS total_assigned,
+        SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS completed,
+        SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS overdue
+      FROM tasks
+      WHERE assigned_by = $1
+    `,
+      [username]
+    );
+    res.json(result.rows[0]); // single user summary
+  } catch (err) {
+    console.error("Error fetching analytics for user:", err);
+    res.status(500).json({ error: "Failed to fetch analytics for user" });
+  }
+});
+
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on port ${port}.`);
 });

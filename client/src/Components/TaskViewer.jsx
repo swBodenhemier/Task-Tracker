@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 
 export const statusText = {
   0: "Assigned",
@@ -17,10 +17,20 @@ export default function TaskViewer() {
   const [sortTarget, setSortTarget] = useState("name");
   const [sortType, setSortType] = useState(0);
   const { user } = useOutletContext();
+  const navigate = useNavigate();
+
+  // catch unauthed
+  if (!user) {
+    navigate("/login");
+  }
 
   // Fetch tasks from backend on first load
   useEffect(() => {
-    fetchTasks(user, setTasks);
+    async function setFromFetch() {
+      const newTasks = await fetchTasks(user);
+      setTasks(newTasks);
+    }
+    setFromFetch();
   }, [user]);
 
   async function updateSort(e) {
@@ -194,7 +204,11 @@ export default function TaskViewer() {
         />
       )}
       {showFilter && (
-        <FilterForm hide={() => setShowFilter(false)} setTasks={setTasks} />
+        <FilterForm
+          hide={() => setShowFilter(false)}
+          setTasks={setTasks}
+          user={user}
+        />
       )}
     </div>
   );
@@ -204,14 +218,24 @@ export function Task({ task, index, setTasks, tracking = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   async function changeStatus(e, id) {
-    const newStatus = Number(e.target.value);
-    // TODO: API call goes here
-    setTasks((prev) => {
-      const updated = prev.map((t) =>
-        t.id === id ? { ...t, status: newStatus } : t
-      );
-      return updated;
-    });
+    try {
+      const newStatus = Number(e.target.value);
+      const updatedTask = { ...task };
+      updatedTask.status = newStatus;
+      const response = fetch(`http://localhost:5000/tasks/${updatedTask.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedTask),
+      });
+      setTasks((prev) => {
+        const updated = prev.map((t) =>
+          t.id === id ? { ...t, status: newStatus } : t
+        );
+        return updated;
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -284,9 +308,20 @@ export function NewTaskForm({ hide, user, addTask }) {
       assigned_by: user,
       status: 0,
     };
-    // TODO: API call goes here
-    addTask(newTask);
-    hide();
+    try {
+      const request = new Request("http://localhost:5000/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTask),
+      });
+      const response = await fetch(request);
+      if (!response.ok) throw "Server Error";
+      addTask(newTask);
+      hide();
+    } catch (err) {
+      console.error(err);
+      alert("Error creating new task");
+    }
   }
 
   function validateFormData() {
@@ -295,7 +330,6 @@ export function NewTaskForm({ hide, user, addTask }) {
         formData.description === "" ||
         formData.date_due === ""
     );
-    console.log(formData);
   }
 
   useEffect(() => {
@@ -351,7 +385,7 @@ export function NewTaskForm({ hide, user, addTask }) {
   );
 }
 
-function FilterForm({ hide, setTasks }) {
+function FilterForm({ hide, setTasks, user }) {
   const [formData, setFormData] = useState({
     status: -1,
     date_assigned: { type: "before", date: "" },
@@ -360,10 +394,42 @@ function FilterForm({ hide, setTasks }) {
   });
 
   async function applyFilters() {
-    console.log(formData);
-    //const tasks = TODO: fetch tasks and filter them
-    //setTasks(tasks);
+    const tasks = await fetchTasks(user, setTasks);
+    setTasks(runFilter(tasks));
     hide();
+  }
+
+  function runFilter(tasks) {
+    let filtered = [...tasks];
+    if (formData.status !== -1) {
+      filtered = filtered.filter(
+        (task) => `${task.status}` === `${formData.status}`
+      );
+    }
+    if (formData.date_assigned.date !== "") {
+      filtered = filtered.filter((task) =>
+        formData.date_assigned.type === "before"
+          ? Number(new Date(formData.date_assigned.date)) >
+            Number(new Date(task.date_assigned))
+          : Number(new Date(formData.date_assigned.date)) <
+            Number(new Date(task.date_assigned))
+      );
+    }
+    if (formData.date_due.date !== "") {
+      filtered = filtered.filter((task) =>
+        formData.date_due.type === "before"
+          ? Number(new Date(formData.date_due.date)) >
+            Number(new Date(task.date_due))
+          : Number(new Date(formData.date_due.date)) <
+            Number(new Date(task.date_due))
+      );
+    }
+    if (formData.assigned_by !== "") {
+      filtered = filtered.filter(
+        (task) => task.assigned_by === formData.assigned_by
+      );
+    }
+    return filtered;
   }
 
   return (
@@ -472,20 +538,29 @@ function FilterForm({ hide, setTasks }) {
   );
 }
 
-async function fetchTasks(user, setTasks) {
+async function fetchTasks(user) {
+  let tasks = [];
   try {
     const response = await fetch(
       `http://localhost:5000/api/tasks?user=${user}`
     );
     if (!response.ok) throw new Error("Failed to fetch tasks");
-    const data = await response.json();
-    setTasks(data);
+    tasks = await response.json();
   } catch (err) {
     console.error(err);
   }
+  return tasks;
 }
 
 export async function deleteTask(taskID, setTasks) {
-  // TODO: API call goes here
-  setTasks((prev) => prev.filter((task) => task.id !== taskID));
+  try {
+    const response = await fetch(`http://localhost:5000/tasks/${taskID}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) throw "Server Error";
+    setTasks((prev) => prev.filter((task) => task.id !== taskID));
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete task");
+  }
 }

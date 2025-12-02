@@ -21,6 +21,7 @@ const router = createBrowserRouter([
       { path: "/login", Component: LogIn },
       { path: "/signup", Component: SignUp },
       { path: "/tasks", Component: TaskViewer },
+      { path: "/track", Component: HomePage },
       { path: "/analytics", Component: HomePage },
     ],
   },

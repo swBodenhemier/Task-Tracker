@@ -17,6 +17,7 @@ const testTasks = [
     date_assigned: "2025-11-07",
     date_due: "2025-11-14",
     assigned_by: "user2",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -27,6 +28,7 @@ const testTasks = [
     date_assigned: "2025-11-07",
     date_due: "2025-12-01",
     assigned_by: "user1",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -37,6 +39,7 @@ const testTasks = [
     date_assigned: "2025-11-15",
     date_due: "2025-11-16",
     assigned_by: "user2",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -47,6 +50,7 @@ const testTasks = [
     date_assigned: "2025-11-21",
     date_due: "2025-12-01",
     assigned_by: "user1",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -57,6 +61,7 @@ const testTasks = [
     date_assigned: "2025-11-07",
     date_due: "2025-12-12",
     assigned_by: "user2",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -67,6 +72,7 @@ const testTasks = [
     date_assigned: "2025-11-04",
     date_due: "2025-11-14",
     assigned_by: "user4",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -77,6 +83,7 @@ const testTasks = [
     date_assigned: "2025-11-07",
     date_due: "2025-11-28",
     assigned_by: "user4",
+    assigned_to: "user1",
     description:
       "This is a test task to demonstrate what a user's task might look like.",
     status: 1,
@@ -286,7 +293,7 @@ export default function TaskViewer() {
   );
 }
 
-function Task({ task, index, setTasks }) {
+export function Task({ task, index, setTasks, tracking = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   async function changeStatus(e, id) {
@@ -353,7 +360,7 @@ function Task({ task, index, setTasks }) {
   );
 }
 
-function NewTaskForm({ hide, user, addTask }) {
+export function NewTaskForm({ hide, user, addTask }) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -445,7 +452,7 @@ function FilterForm({ hide, setTasks }) {
 
   async function applyFilters() {
     console.log(formData);
-    const tasks = /* TODO: API call goes here*/ [];
+    //const tasks = TODO: fetch tasks and filter them
     //setTasks(tasks);
     hide();
   }
@@ -457,6 +464,7 @@ function FilterForm({ hide, setTasks }) {
         <label>
           Status:{" "}
           <select
+            className="w-[195px]"
             defaultValue={formData.status}
             onChange={(e) =>
               setFormData((prev) => {
@@ -465,8 +473,8 @@ function FilterForm({ hide, setTasks }) {
               })
             }
           >
-            <option className="italic" value={-1}>
-              No Selection
+            <option className="text-gray-600" value={-1}>
+              --No Selection--
             </option>
             {Object.values(statusText).map((status, index) => (
               <option key={status} value={index}>
@@ -533,6 +541,7 @@ function FilterForm({ hide, setTasks }) {
           Assigned By:{" "}
           <input
             defaultValue={formData.assigned_by}
+            placeholder="No Filter"
             onChange={(e) => {
               setFormData((prev) => {
                 prev.assigned_by = e.target.value;
@@ -554,7 +563,7 @@ function FilterForm({ hide, setTasks }) {
   );
 }
 
-async function deleteTask(taskID, setTasks) {
+export async function deleteTask(taskID, setTasks) {
   // TODO: API call goes here
   setTasks((prev) => prev.filter((task) => task.id !== taskID));
 }

@@ -10,86 +10,6 @@ export const statusText = {
   4: "Canceled",
 };
 
-const testTasks = [
-  {
-    name: "task1",
-    id: 1,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-14",
-    assigned_by: "user2",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task2",
-    id: 2,
-    date_assigned: "2025-11-07",
-    date_due: "2025-12-01",
-    assigned_by: "user1",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task3",
-    id: 3,
-    date_assigned: "2025-11-15",
-    date_due: "2025-11-16",
-    assigned_by: "user2",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task4",
-    id: 4,
-    date_assigned: "2025-11-21",
-    date_due: "2025-12-01",
-    assigned_by: "user1",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task5",
-    id: 5,
-    date_assigned: "2025-11-07",
-    date_due: "2025-12-12",
-    assigned_by: "user2",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task6",
-    id: 6,
-    date_assigned: "2025-11-04",
-    date_due: "2025-11-14",
-    assigned_by: "user4",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-  {
-    name: "task7",
-    id: 7,
-    date_assigned: "2025-11-07",
-    date_due: "2025-11-28",
-    assigned_by: "user4",
-    assigned_to: "user1",
-    description:
-      "This is a test task to demonstrate what a user's task might look like.",
-    status: 1,
-  },
-];
-
 export default function TaskViewer() {
   const [tasks, setTasks] = useState([]);
   const [showNewTask, setShowNewTask] = useState(false);
@@ -100,20 +20,7 @@ export default function TaskViewer() {
 
   // Fetch tasks from backend on first load
   useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/tasks?user=${user}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch tasks");
-        const data = await response.json();
-        setTasks(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    fetchTasks();
+    fetchTasks(user, setTasks);
   }, [user]);
 
   async function updateSort(e) {
@@ -388,7 +295,12 @@ export function NewTaskForm({ hide, user, addTask }) {
         formData.description === "" ||
         formData.date_due === ""
     );
+    console.log(formData);
   }
+
+  useEffect(() => {
+    validateFormData();
+  }, [formData]);
 
   return (
     <div className="popup">
@@ -400,7 +312,6 @@ export function NewTaskForm({ hide, user, addTask }) {
             defaultValue={formData.name}
             onChange={(e) => {
               setFormData((prev) => ({ ...prev, name: e.target.value }));
-              validateFormData();
             }}
           />
         </label>
@@ -410,7 +321,6 @@ export function NewTaskForm({ hide, user, addTask }) {
             defaultValue={formData.description}
             onChange={(e) => {
               setFormData((prev) => ({ ...prev, description: e.target.value }));
-              validateFormData();
             }}
           />
         </label>
@@ -421,7 +331,6 @@ export function NewTaskForm({ hide, user, addTask }) {
             defaultValue={formData.date_due}
             onChange={(e) => {
               setFormData((prev) => ({ ...prev, date_due: e.target.value }));
-              validateFormData();
             }}
           />
         </label>
@@ -561,6 +470,19 @@ function FilterForm({ hide, setTasks }) {
       </div>
     </div>
   );
+}
+
+async function fetchTasks(user, setTasks) {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/tasks?user=${user}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch tasks");
+    const data = await response.json();
+    setTasks(data);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 export async function deleteTask(taskID, setTasks) {

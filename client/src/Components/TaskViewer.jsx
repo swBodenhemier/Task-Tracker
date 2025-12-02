@@ -10,10 +10,85 @@ export const statusText = {
   4: "Canceled",
 };
 
+const testTasks = [
+  {
+    name: "task1",
+    id: 1,
+    date_assigned: "2025-11-07",
+    date_due: "2025-11-14",
+    assigned_by: "user2",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task2",
+    id: 2,
+    date_assigned: "2025-11-07",
+    date_due: "2025-12-01",
+    assigned_by: "user1",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task3",
+    id: 3,
+    date_assigned: "2025-11-15",
+    date_due: "2025-11-16",
+    assigned_by: "user2",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task4",
+    id: 4,
+    date_assigned: "2025-11-21",
+    date_due: "2025-12-01",
+    assigned_by: "user1",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task5",
+    id: 5,
+    date_assigned: "2025-11-07",
+    date_due: "2025-12-12",
+    assigned_by: "user2",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task6",
+    id: 6,
+    date_assigned: "2025-11-04",
+    date_due: "2025-11-14",
+    assigned_by: "user4",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+  {
+    name: "task7",
+    id: 7,
+    date_assigned: "2025-11-07",
+    date_due: "2025-11-28",
+    assigned_by: "user4",
+    description:
+      "This is a test task to demonstrate what a user's task might look like.",
+    status: 1,
+  },
+];
+
 export default function TaskViewer() {
   const [tasks, setTasks] = useState([]);
   const [showNewTask, setShowNewTask] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [sortTarget, setSortTarget] = useState("name");
+  const [sortType, setSortType] = useState(0);
   const { user } = useOutletContext();
 
   // Fetch tasks from backend on first load
@@ -34,6 +109,41 @@ export default function TaskViewer() {
     fetchTasks();
   }, [user]);
 
+  async function updateSort(e) {
+    const target = e.target.name;
+    if (target === undefined || target === sortTarget) {
+      setSortType((sortType + 1) % 2);
+    } else {
+      setSortTarget(target);
+      setSortType(0);
+    }
+  }
+
+  useEffect(() => {
+    async function sortTasks() {
+      const tempTasks = [...tasks];
+      tempTasks.sort((a, b) => {
+        if (sortTarget === "name" || sortTarget === "assigned_by") {
+          return sortType === 0
+            ? a[sortTarget].localeCompare(b[sortTarget])
+            : b[sortTarget].localeCompare(a[sortTarget]);
+        } else if (sortTarget.includes("date")) {
+          const aDate = new Date(a[sortTarget]);
+          const bDate = new Date(b[sortTarget]);
+          return sortType === 0
+            ? Number(aDate) - Number(bDate)
+            : Number(bDate) - Number(aDate);
+        } else {
+          return sortType === 0
+            ? a[sortTarget] - b[sortTarget]
+            : b[sortTarget] - a[sortTarget];
+        }
+      });
+      setTasks(tempTasks);
+    }
+    sortTasks();
+  }, [sortTarget, sortType]);
+
   return (
     <div className="w-full h-full py-10">
       <div className="segment h-full w-full flex flex-col gap-4">
@@ -44,23 +154,107 @@ export default function TaskViewer() {
             </button>
           </div>
           <h2 className="w-1/3 text-center">{user}'s Tasks</h2>
-          <div className="flex justify-end gap-4 w-1/3">
+          <div className="flex justify-end w-1/3">
             <button
               className="button min-w-20"
               onClick={() => setShowFilter(true)}
             >
               Filter
             </button>
-            <button className="button min-w-20">Sort</button>
           </div>
         </div>
         <div className="border border-[#709090] rounded bg-slate-50 w-full h-full max-h-[calc(100%-40px)] flex flex-col gap-[1px] py-1">
           <div className="w-full py-1 pl-4 flex items-center justify-between max-[700px]:hidden">
-            <span className="w-1/4">Name</span>
-            <span className="w-1/4">Status</span>
-            <span className="w-1/6">Date Assigned</span>
-            <span className="w-1/6">Date Due</span>
-            <span className="w-1/6">Assigned By</span>
+            <span className="w-1/4 flex gap-1 items-center">
+              Name
+              <button
+                className="altButton small"
+                name="name"
+                onClick={updateSort}
+              >
+                {sortTarget === "name" ? (
+                  sortType === 0 ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronUp />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
+            <span className="w-1/4 flex gap-1 items-center">
+              Status
+              <button
+                className="altButton small"
+                name="status"
+                onClick={updateSort}
+              >
+                {sortTarget === "status" ? (
+                  sortType === 0 ? (
+                    <ChevronDown name="status" />
+                  ) : (
+                    <ChevronUp name="status" />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
+            <span className="w-1/6 flex gap-1 items-center">
+              Date Assigned
+              <button
+                className="altButton small"
+                name="date_assigned"
+                onClick={updateSort}
+              >
+                {sortTarget === "date_assigned" ? (
+                  sortType === 0 ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronUp />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
+            <span className="w-1/6 flex gap-1 items-center">
+              Date Due
+              <button
+                className="altButton small"
+                name="date_due"
+                onClick={updateSort}
+              >
+                {sortTarget === "date_due" ? (
+                  sortType === 0 ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronUp />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
+            <span className="w-1/6 flex gap-1 items-center">
+              Assigned By
+              <button
+                className="altButton small"
+                name="assigned_by"
+                onClick={updateSort}
+              >
+                {sortTarget === "assigned_by" ? (
+                  sortType === 0 ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronUp />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
           </div>
           <div className="overflow-y-auto">
             {tasks
@@ -117,7 +311,7 @@ function Task({ task, index, setTasks }) {
           className="flex gap-4 items-center w-1/4 max-[700px]:w-fit"
           onClick={() => setIsExpanded((prev) => !prev)}
         >
-          <span className="altButton">
+          <span className="altButton small">
             {isExpanded ? <ChevronUp /> : <ChevronDown />}
           </span>
           <span>{task.name}</span>
@@ -244,15 +438,15 @@ function NewTaskForm({ hide, user, addTask }) {
 function FilterForm({ hide, setTasks }) {
   const [formData, setFormData] = useState({
     status: -1,
-    assigned_date: { type: "before", date: "" },
-    due_date: { type: "before", date: "" },
+    date_assigned: { type: "before", date: "" },
+    date_due: { type: "before", date: "" },
     assigned_by: "",
   });
 
   async function applyFilters() {
     console.log(formData);
     const tasks = /* TODO: API call goes here*/ [];
-    setTasks(tasks);
+    //setTasks(tasks);
     hide();
   }
 
@@ -285,10 +479,10 @@ function FilterForm({ hide, setTasks }) {
           Assigned
           <span className="flex gap-1">
             <select
-              defaultValue={formData.assigned_date.type}
+              defaultValue={formData.date_assigned.type}
               onChange={(e) =>
                 setFormData((prev) => {
-                  prev.assigned_date.type = e.target.value;
+                  prev.date_assigned.type = e.target.value;
                   return prev;
                 })
               }
@@ -297,10 +491,10 @@ function FilterForm({ hide, setTasks }) {
               <option value="after">after</option>
             </select>
             <input
-              defaultValue={formData.assigned_date.date}
+              defaultValue={formData.date_assigned.date}
               onChange={(e) => {
                 setFormData((prev) => {
-                  prev.assigned_date.date = e.target.value;
+                  prev.date_assigned.date = e.target.value;
                   return prev;
                 });
               }}
@@ -312,10 +506,10 @@ function FilterForm({ hide, setTasks }) {
           Due
           <span className="flex gap-1">
             <select
-              defaultValue={formData.due_date.type}
+              defaultValue={formData.date_due.type}
               onChange={(e) =>
                 setFormData((prev) => {
-                  prev.due_date.type = e.target.value;
+                  prev.date_due.type = e.target.value;
                   return prev;
                 })
               }
@@ -324,10 +518,10 @@ function FilterForm({ hide, setTasks }) {
               <option value="after">after</option>
             </select>{" "}
             <input
-              defaultValue={formData.due_date.date}
+              defaultValue={formData.date_due.date}
               onChange={(e) => {
                 setFormData((prev) => {
-                  prev.due_date.date = e.target.value;
+                  prev.date_due.date = e.target.value;
                   return prev;
                 });
               }}

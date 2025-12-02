@@ -15,15 +15,20 @@ h2 {
          active:outline outline-[1px] outline-sky-700 text-center disabled:bg-gray-400
           disabled:border-gray-500 disabled:hover:border-gray-700 disabled:active:outline-none;
 }
-.altButton {
-  @apply border p-1 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300 cursor-pointer
-       text-gray-700 active:text-black hover:outline outline-[1px] outline-[#709090] flex items-center justify-center;
-}
 .button.red {
   @apply border border-red-600 rounded-lg bg-red-500 px-2 py-1 text-white
        hover:bg-red-600 active:bg-red-700 hover:shadow hover:border-red-700
          active:outline outline-[1px] outline-red-700 text-center disabled:bg-gray-400
           disabled:border-gray-500 disabled:hover:border-gray-700 disabled:active:outline-none;
+}
+.altButton {
+  @apply border p-1 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300 cursor-pointer
+       text-gray-700 active:text-black hover:outline outline-[1px] outline-[#709090] flex items-center justify-center;
+}
+.altButton.small {
+  @apply border p-0 rounded border-[#709090] bg-slate-200 shadow active:bg-slate-300 cursor-pointer
+       text-gray-700 active:text-black hover:outline outline-[1px] outline-[#709090] flex items-center justify-center
+       leading-none !size-5;
 }
 
 .segment {

@@ -71,9 +71,10 @@ export default function TaskTracking() {
             <div className="w-full py-1 pl-4 flex items-center justify-between max-[700px]:hidden">
               <span className="w-1/4">Name</span>
               <span className="w-1/4">Status</span>
-              <span className="w-1/6">Date Assigned</span>
+              <span className="w-1/5">Date Assigned</span>
               <span className="w-1/6">Date Due</span>
               <span className="w-1/6">Assigned By</span>
+              <span className="w-1/6">Assigned To</span>
             </div>
             <div className="overflow-y-auto">
               {tasks.map((task, index) => (

@@ -8,6 +8,7 @@ import {
 import HomePage from "./Components/HomePage";
 import LogIn from "./Components/login";
 import SignUp from "./Components/signup";
+import Dashboard from "./Components/Dashboard";
 import { Menu as HamburgerMenu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import TaskViewer from "./Components/TaskViewer";
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
       { path: "/signup", Component: SignUp },
       { path: "/tasks", Component: TaskViewer },
       { path: "/track", Component: TaskTracking },
-      { path: "/analytics", Component: HomePage },
+      { path: "/analytics", Component: Dashboard },
     ],
   },
 ]);

@@ -53,7 +53,7 @@ export default function TaskViewer() {
     async function sortTasks() {
       const tempTasks = [...tasks];
       tempTasks.sort((a, b) => {
-        if (sortTarget === "name" || sortTarget === "assigned_by") {
+        if (sortTarget === "name" || sortTarget === "assigned_by" || sortTarget === "assigned_to") {
           return sortType === 0
             ? a[sortTarget].localeCompare(b[sortTarget])
             : b[sortTarget].localeCompare(a[sortTarget]);
@@ -94,8 +94,8 @@ export default function TaskViewer() {
           </div>
         </div>
         <div className="border border-[#709090] rounded bg-slate-50 w-full h-full max-h-[calc(100%-40px)] flex flex-col gap-[1px] py-1">
-          <div className="w-full py-1 pl-4 flex items-center justify-between max-[700px]:hidden">
-            <span className="w-1/4 flex gap-1 items-center">
+          <div className="w-full py-1 pl-4 flex items-center justify-start gap-4 max-[700px]:hidden">
+            <span className="w-1/5 flex gap-1 items-center">
               Name
               <button
                 className="altButton small"
@@ -113,7 +113,7 @@ export default function TaskViewer() {
                 )}
               </button>
             </span>
-            <span className="w-1/4 flex gap-1 items-center">
+            <span className="w-1/5 min-w-0 flex gap-1 items-center">
               Status
               <button
                 className="altButton small"
@@ -131,7 +131,7 @@ export default function TaskViewer() {
                 )}
               </button>
             </span>
-            <span className="w-1/6 flex gap-1 items-center">
+            <span className="w-1/5 min-w-0 flex gap-1 items-center">
               Date Assigned
               <button
                 className="altButton small"
@@ -149,7 +149,7 @@ export default function TaskViewer() {
                 )}
               </button>
             </span>
-            <span className="w-1/6 flex gap-1 items-center">
+            <span className="w-1/5 min-w-0 flex gap-1 items-center">
               Date Due
               <button
                 className="altButton small"
@@ -167,7 +167,7 @@ export default function TaskViewer() {
                 )}
               </button>
             </span>
-            <span className="w-1/6 flex gap-1 items-center">
+            <span className="w-1/10 min-w-0 flex gap-1 items-center">
               Assigned By
               <button
                 className="altButton small"
@@ -175,6 +175,24 @@ export default function TaskViewer() {
                 onClick={updateSort}
               >
                 {sortTarget === "assigned_by" ? (
+                  sortType === 0 ? (
+                    <ChevronDown />
+                  ) : (
+                    <ChevronUp />
+                  )
+                ) : (
+                  "-"
+                )}
+              </button>
+            </span>
+            <span className="w-1/10 min-w-0 flex gap-1 items-center">
+              Assigned To
+              <button
+                className="altButton small"
+                name="assigned_to"
+                onClick={updateSort}
+              >
+                {sortTarget === "assigned_to" ? (
                   sortType === 0 ? (
                     <ChevronDown />
                   ) : (
@@ -202,9 +220,10 @@ export default function TaskViewer() {
         <NewTaskForm
           hide={() => setShowNewTask(false)}
           user={user}
-          assigned_to={user}
           addTask={(newTask) => {
+            if (newTask.assigned_to === user){
             setTasks((prev) => [...prev, newTask]);
+            }
           }}
         />
       )}
@@ -250,12 +269,12 @@ export function Task({ task, index, setTasks, tracking = false }) {
   return (
     <div className="flex flex-col hover:border-y border-[#709090] hover:z-4">
       <div
-        className={`w-full py-1 pl-4 flex items-center justify-between text-nowrap max-[700px]:text-wrap max-[700px]:flex-wrap ${
+        className={`w-full py-1 pl-4 flex items-center justify-start gap-4 text-nowrap max-[700px]:text-wrap max-[700px]:flex-wrap ${
           index % 2 === 0 ? "bg-slate-200" : "bg-slate-50"
         }`}
       >
         <span
-          className="flex gap-4 items-center w-1/4 max-[700px]:w-fit"
+          className="flex gap-4 items-center w-1/5 min-w-0 max-[700px]:w-fit"
           onClick={() => setIsExpanded((prev) => !prev)}
         >
           <span className="altButton small">
@@ -263,7 +282,7 @@ export function Task({ task, index, setTasks, tracking = false }) {
           </span>
           <span>{task.name}</span>
         </span>
-        <span className="w-1/4 max-[700px]:w-fit">
+        <span className="w-1/6 min-w-0max-[700px]:w-fit">
           {tracking ? (
             statusText[task.status]
           ) : (
@@ -279,9 +298,10 @@ export function Task({ task, index, setTasks, tracking = false }) {
             </select>
           )}
         </span>
-        <span className="w-1/6 max-[700px]:w-fit">{task.date_assigned}</span>
-        <span className="w-1/6 max-[700px]:w-fit">{task.date_due}</span>
-        <span className="w-1/6 max-[700px]:w-fit">{task.assigned_by}</span>
+        <span className="w-1/6 min-w-0 max-[700px]:w-fit">{task.date_assigned}</span>
+        <span className="w-1/6 min-w-0 max-[700px]:w-fit">{task.date_due}</span>
+        <span className="w-1/6 min-w-0 max-[700px]:w-fit">{task.assigned_by}</span>
+        <span className="w-1/12 min-w-0 max-[700px]:w-fit">{task.assigned_to}</span>
       </div>
       {isExpanded && (
         <div
@@ -309,6 +329,7 @@ export function Task({ task, index, setTasks, tracking = false }) {
 export function NewTaskForm({ hide, user, assigned_to, addTask }) {
   const [formData, setFormData] = useState({
     name: "",
+    assigned_to: "",
     description: "",
     date_due: "",
   });
@@ -321,7 +342,7 @@ export function NewTaskForm({ hide, user, assigned_to, addTask }) {
       id: date,
       date_assigned: new Date(date).toISOString().split("T")[0],
       assigned_by: user,
-      assigned_to: assigned_to,
+      assigned_to: formData.assigned_to,
       status: 0,
     };
     try {
@@ -343,6 +364,7 @@ export function NewTaskForm({ hide, user, assigned_to, addTask }) {
   function validateFormData() {
     setDisableConfirm(
       formData.name === "" ||
+      formData.assigned_to === "" ||
         formData.description === "" ||
         formData.date_due === ""
     );
@@ -362,6 +384,15 @@ export function NewTaskForm({ hide, user, assigned_to, addTask }) {
             defaultValue={formData.name}
             onChange={(e) => {
               setFormData((prev) => ({ ...prev, name: e.target.value }));
+            }}
+          />
+        </label>
+        <label>
+          <span>Assign to: </span>
+          <input
+            defaultValue={formData.assigned_to}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, assigned_to: e.target.value }));
             }}
           />
         </label>
@@ -407,6 +438,7 @@ export function FilterForm({ hide, setTasks, user }) {
     date_assigned: { type: "before", date: "" },
     date_due: { type: "before", date: "" },
     assigned_by: "",
+    assigned_to: "",
   });
 
   async function applyFilters() {

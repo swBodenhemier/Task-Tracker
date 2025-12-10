@@ -17,8 +17,8 @@ app.use(express.static("public"));
 const pool = new Pool({
   user: "postgres", // your PostgreSQL username
   host: "localhost",
-  database: "task_manager", // your database name
-  password: "password", // your password
+  database: "taskManager", // your database name
+  password: "tre12345", // your password
   port: 5432,
 });
 const client = pool;
@@ -208,15 +208,19 @@ app.delete("/tasks/:id", async (req, res) => {
 app.get("/api/tasks", async (req, res) => {
   const { user } = req.query;
 
-  if (!user) {
-    return res.status(400).json({ error: "User query parameter is required" });
-  }
-
   try {
-    const result = await pool.query(
-      "SELECT id, name, date_assigned, date_due, assigned_by, assigned_to, description, status FROM tasks WHERE assigned_to = $1 ORDER BY date_assigned DESC",
-      [user]
-    );
+    let queryText = "SELECT id, name, date_assigned, date_due, assigned_by, assigned_to, description, status FROM tasks ORDER BY date_assigned DESC";
+    let queryParams = [];
+
+    // If a user is provided, filter tasks by the assigned user
+    if (user) {
+      queryText = "SELECT id, name, date_assigned, date_due, assigned_by, assigned_to, description, status FROM tasks WHERE assigned_to = $1 ORDER BY date_assigned DESC";
+      queryParams = [user];
+    }
+
+    const result = await pool.query(queryText, queryParams);
+
+    // Send tasks as response
     res.json(
       result.rows.map((row) => {
         row.date_assigned = row.date_assigned.toISOString().split("T")[0];

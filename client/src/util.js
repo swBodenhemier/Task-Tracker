@@ -1,9 +1,9 @@
-export async function fetchTasks(user) {
+export async function fetchTasks(user = "") {
   let tasks = [];
   try {
-    const response = await fetch(
-      `http://localhost:5000/api/tasks?user=${user}`
-    );
+    // Always include the 'user' query parameter, even if it's empty
+    const url = `http://localhost:5000/api/tasks?user=${user}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch tasks");
     tasks = await response.json();
   } catch (err) {
@@ -11,6 +11,7 @@ export async function fetchTasks(user) {
   }
   return tasks;
 }
+
 
 export async function deleteTask(taskID, setTasks) {
   try {
